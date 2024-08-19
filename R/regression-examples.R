@@ -1,5 +1,6 @@
 library(tidyverse)
 library(gtsummary)
+library(broom.helpers)
 
 nlsy_cols <- c("glasses", "eyesight", "sleep_wkdy", "sleep_wknd",
 							 "id", "nsibs", "samp", "race_eth", "sex", "region",
@@ -33,6 +34,12 @@ tbl_uvregression(
 	method.args = list(family = binomial()),
 	exponentiate = TRUE)
 
+#Univar regression with x=sex_cat
+tbl_uvregression(
+	nlsy,
+	x = sex_cat,
+	include = c(nsibs, sleep_wkdy, sleep_wknd, income),
+	method = lm)
 
 ## Multivariable regressions
 
@@ -46,8 +53,15 @@ linear_model_int <- lm(income ~ sex_cat*age_bir + race_eth_cat,
 											 data = nlsy)
 
 
-logistic_model <- glm(glasses ~ eyesight_cat + sex_cat + income,
-											data = nlsy, family = binomial())
+logistic_model <- glm(glasses ~ eyesight_cat + sex_cat,
+											data = nlsy, family = binomial(link = "log"))
+
+logistic_model_pois <- glm(income ~ sex_cat + race_eth_cat + age_bir,
+											data = nlsy, family = poisson())
+
+logistic_model_pois2 <- glm(glasses ~ eyesight_cat + sex_cat,
+											data = nlsy, family = poisson(link = "log"))
+
 
 
 ## Tables
@@ -61,14 +75,13 @@ tbl_regression(
 		age_bir ~ "Age at first birth"
 	))
 
-
-tbl_regression(
+# Risk ratio table for log
+tbl_logBin <- tbl_regression(
 	logistic_model,
 	exponentiate = TRUE,
 	label = list(
 		sex_cat ~ "Sex",
-		eyesight_cat ~ "Eyesight",
-		income ~ "Income"
+		eyesight_cat ~ "Eyesight"
 	))
 
 
@@ -91,7 +104,36 @@ tbl_int <- tbl_regression(
 		`sex_cat:age_bir` ~ "Sex/age interaction"
 	))
 
+#Poisson table
+tbl_regression(
+	logistic_model_pois,
+	exponentiate = TRUE,
+	label = list(
+		sex_cat ~ "Sex",
+		race_eth_cat  ~ "Race/ethnicity",
+		age_bir ~ "Age at birth"
+	)
+)
+
+
+#Poisson-log table
+
+tbl_logPois <- tbl_regression(
+	logistic_model_pois2,
+	exponentiate = TRUE,
+	label = list(
+		eyesight_cat ~ "Eyesight",
+		sex_cat ~ "Sex"
+	),
+	tidy_fun = partial(tidy_robust, vcov = "HC1")
+)
+
 ## Table comparing the models with and without interaction
 
 tbl_merge(list(tbl_no_int, tbl_int),
 					tab_spanner = c("**Model 1**", "**Model 2**"))
+
+# Table comparing Log-binomial and log-Poisson
+
+tbl_merge(list(tbl_logBin, tbl_logPois),
+					tab_spanner = c("**Log-Binomial**", "**Log-Poisson**"))
