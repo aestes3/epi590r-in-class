@@ -65,7 +65,7 @@ tbl_summary(
 	missing_text = "Missing") |>
 	add_p(test = list(all_continuous() ~ "t.test",
 										all_categorical() ~ "chisq.test")) |>
-	add_overall(col_label = "**Total**") |>
+	add_overall(col_label = "**Total** N={N}") |>
 	bold_labels() |>
 
 	#Remove unnecessary footnotes
