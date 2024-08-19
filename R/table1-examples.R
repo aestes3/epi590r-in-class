@@ -42,18 +42,39 @@ tbl_summary(
 	nlsy,
 	by = sex_cat,
 	include = c(sex_cat, race_eth_cat,
-							eyesight_cat, glasses, age_bir),
+							eyesight_cat, glasses, age_bir, income, starts_with("sleep")),
 	label = list(
 		race_eth_cat ~ "Race/ethnicity",
 		eyesight_cat ~ "Eyesight",
 		glasses ~ "Wears glasses",
 		age_bir ~ "Age at first birth"
 	),
+	# creates income at 10th and 90th percent,
+	# creates all sleep var with min/max
+	statistic = list(
+	income ~ "{p10}, {p90}",
+	starts_with("sleep") ~ "min= {min}; max= {max}"
+	),
+
+	#limits created vars #s to specific length
+	digits = list(
+		income ~ c(3,3),
+		starts_with("sleep") ~ c(1,1)
+	),
+
 	missing_text = "Missing") |>
 	add_p(test = list(all_continuous() ~ "t.test",
 										all_categorical() ~ "chisq.test")) |>
 	add_overall(col_label = "**Total**") |>
 	bold_labels() |>
-	modify_footnote(update = everything() ~ NA) |>
+
+	#Remove unnecessary footnotes
+  modify_footnote(update = everything() ~ NA ) |>
+	#Create footnote to race/ethnicity using table styling
+	modify_table_styling(
+		columns = label,
+		rows = label == "Race/ethnicity",
+		footnote = "https://www.nlsinfo.org/content/cohorts/nlsy79/topical-guide/household/race-ethnicity-immigration-data"
+		) |>
 	modify_header(label = "**Variable**", p.value = "**P**")
 
