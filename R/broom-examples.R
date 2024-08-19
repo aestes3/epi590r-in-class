@@ -12,16 +12,19 @@ nlsy <- read_csv(here::here("data", "raw", "nlsy.csv"),
 				 race_eth_cat = factor(race_eth, labels = c("Hispanic", "Black", "Non-Black, Non-Hispanic")),
 				 eyesight_cat = factor(eyesight, labels = c("Excellent", "Very good", "Good", "Fair", "Poor")))
 
+#Creates model based on variables
 mod_sex_cat <- lm(income ~ sex_cat, data = nlsy)
 mod_race_eth_cat <- lm(income ~ race_eth_cat, data = nlsy)
 mod_eyesight_cat <- lm(income ~ eyesight_cat, data = nlsy)
 mod_age_bir <- lm(income ~ age_bir, data = nlsy)
 
+#Extracts model data and stores it into tidy vars
 tidy_sex_cat <- tidy(mod_sex_cat, conf.int = TRUE)
 tidy_race_eth_cat <- tidy(mod_race_eth_cat, conf.int = TRUE)
 tidy_eyesight_cat <- tidy(mod_eyesight_cat, conf.int = TRUE)
 tidy_age_bir <- tidy(mod_age_bir, conf.int = TRUE)
 
+#Combines all previous steps into one
 bind_rows(
 	sex_cat = tidy_sex_cat,
 	race_eth_cat = tidy_race_eth_cat,
@@ -31,6 +34,7 @@ bind_rows(
 		term = str_remove(term, model),
 		term = ifelse(term == "", model, term))
 
+#Creates logistic model
 logistic_model <- glm(glasses ~ eyesight_cat + sex_cat + income,
 											data = nlsy, family = binomial())
 
